@@ -21,6 +21,15 @@ import {
 import { pgHexToUint8Array } from '~/utils.ts';
 
 export const effectPgCodecs = refineGenericPgCodecs({
+	bool: { normalizeParamArray: (v) => makePgArray(v) },
+	char: { normalizeParamArray: (v) => makePgArray(v) },
+	varchar: { normalizeParamArray: (v) => makePgArray(v) },
+	text: { normalizeParamArray: (v) => makePgArray(v) },
+	smallint: { normalizeParamArray: (v) => makePgArray(v) },
+	int: { normalizeParamArray: (v) => makePgArray(v) },
+	smallserial: { normalizeParamArray: (v) => makePgArray(v) },
+	serial: { normalizeParamArray: (v) => makePgArray(v) },
+	float8: { normalizeParamArray: (v) => makePgArray(v) },
 	bit: {
 		cast: castToText,
 		castArray: castToTextArr,
@@ -322,6 +331,9 @@ export const effectPgCodecs = refineGenericPgCodecs({
 		normalizeParamArray: (v) => makePgArray(v),
 	},
 	bytea: {
+		// Preserve native binary encoding for populated arrays; empty arrays
+		// need a textual representation because their element type cannot be inferred.
+		normalizeParamArray: (v) => v.length === 0 ? '{}' : v,
 		normalizeInJson: typeof Buffer === 'undefined' ? pgHexToUint8Array : genericPgCodecs.bytea?.normalizeInJson,
 		normalizeArrayInJson: typeof Buffer === 'undefined'
 			? arrayCompatNormalize(pgHexToUint8Array)
@@ -349,6 +361,16 @@ export const effectPgCodecs = refineGenericPgCodecs({
 		normalizeArray: arrayCompatNormalize(BigInt),
 		normalizeParamArray: (v) => makePgArray(v),
 	},
+	bigint: {
+		normalize: BigInt,
+		normalizeArray: arrayCompatNormalize((v) => v === null ? null : BigInt(v)),
+		normalizeParamArray: (v) => makePgArray(v),
+	},
+	bigserial: {
+		normalize: BigInt,
+		normalizeArray: arrayCompatNormalize((v) => v === null ? null : BigInt(v)),
+		normalizeParamArray: (v) => makePgArray(v),
+	},
 	'bigint:number': {
 		normalize: Number,
 		normalizeArray: arrayCompatNormalize(Number),
@@ -359,13 +381,17 @@ export const effectPgCodecs = refineGenericPgCodecs({
 		normalizeArray: arrayCompatNormalize(String),
 		normalizeParamArray: (v) => makePgArray(v),
 	},
-	'bigserial:number': { normalize: Number },
+	'bigserial:number': {
+		normalize: Number,
+		normalizeParamArray: (v) => makePgArray(v),
+	},
 	// Binary `float4` is widened to float64
 	float4: {
 		cast: castToText,
 		castArray: castToTextArr,
 		normalize: Number,
 		normalizeArray: arrayCompatNormalize(Number),
+		normalizeParamArray: (v) => makePgArray(v),
 	},
 	uuid: { normalizeParamArray: (v) => makePgArray(v) },
 	halfvec: {
