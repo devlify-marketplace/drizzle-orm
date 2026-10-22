@@ -374,7 +374,8 @@ const createTableColumns = (
 		statement += columnStatement;
 		statement += it.notNull && !it.identity && !pk ? '.notNull()' : '';
 		statement += it.identity ? generateIdentityParams(it) : '';
-		statement += it.generated ? `.generatedAlwaysAs(sql\`${escapeForSqlTemplate(it.generated.as)}\`)` : '';
+		// SQL Server hides computed definitions when the login lacks VIEW DEFINITION.
+		statement += it.generated?.as ? `.generatedAlwaysAs(sql\`${escapeForSqlTemplate(it.generated.as)}\`)` : '';
 
 		const fks = fkByColumnName[it.name];
 		if (fks) {
